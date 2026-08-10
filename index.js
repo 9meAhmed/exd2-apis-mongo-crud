@@ -9,6 +9,7 @@ const router = express.Router();
 app.use(cors());
 app.use(express.json());
 
+router.use('/auth', require('./src/routes/authRoutes'));
 router.use('/products', require('./src/routes/productRoutes'));
 router.use('/categories', require('./src/routes/categoryRoutes'));
 
