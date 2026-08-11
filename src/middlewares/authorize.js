@@ -1,5 +1,5 @@
+require('dotenv').config();
 var jwt = require('jsonwebtoken');
-const PRIVATE_KEY = 'abcdef1234567890';
 
 const authorize = () => {
 
@@ -12,7 +12,7 @@ const authorize = () => {
         const token = req.headers.authorization.replace('Bearer ', '');
 
         try {
-            var decoded = jwt.verify(token, PRIVATE_KEY);
+            var decoded = jwt.verify(token, process.env.JWT_TOKEN_SECRET);
             req.user = decoded; // Attach the decoded user info to the request object
             next();
         } catch (error) {
