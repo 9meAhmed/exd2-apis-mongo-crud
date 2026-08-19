@@ -140,6 +140,47 @@ exports.resetPassword = async (req, res, next) => {
     res.status(200).json({ message: "Password reset successful" });
 };
 
+exports.logout = async (req, res, next) => {
+    const user = await User.findOne({ email: req.user.email });
+
+    if(!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    await clearUserRefreshTokenHash(user);
+
+    res.status(200).json({ message: "Logout successful" });
+};
+
+exports.resetPassword = async (req, res, next) => {
+    const { email, resetPasswordCode, newPassword } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if(!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    if(user.resetPasswordCode !== resetPasswordCode || user.resetPasswordCodeExpiry < new Date()) {
+        return res.status(400).json({ message: "Invalid or expired reset password code" });
+    }
+
+    const isOldPassword = await bcrypt.compare(newPassword, user.password);
+
+    // if(isOldPassword) {
+    //     return res.status(400).json({ message: "New password cannot be the same as the old password" });
+    // }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordCode = null;
+    user.resetPasswordCodeExpiry = null;
+    await user.save();
+
+    sendMail(user.email, "Password Reset Successful", "Your password has been reset successfully.", "<b>Your password has been reset successfully.</b>");
+
+    res.status(200).json({ message: "Password reset successful" });
+};
+
 const generateUserAccessToken = (user) => {
     return jwt.sign({ id: user._id, email: user.email }, process.env.JWT_TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPIRATION || '5m' });
 }
